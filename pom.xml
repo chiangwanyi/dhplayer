@@ -41,13 +41,13 @@
 			<scope>test</scope>
 		</dependency>
 
-<!--		<dependency>-->
-<!--			<groupId>com.netsdk</groupId>-->
-<!--			<artifactId>netsdk-lib</artifactId>-->
-<!--			<version>1.0</version>-->
-<!--			<scope>system</scope>-->
-<!--			<systemPath>${project.basedir}/lib/netsdk-1.0.jar</systemPath>-->
-<!--		</dependency>-->
+		<dependency>
+			<groupId>com.netsdk</groupId>
+			<artifactId>netsdk-lib</artifactId>
+			<version>1.0</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/lib/netsdk-1.0.jar</systemPath>
+		</dependency>
 	</dependencies>
 
 	<build>
