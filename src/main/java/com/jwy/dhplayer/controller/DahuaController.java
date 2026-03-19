@@ -10,10 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -29,13 +26,13 @@ public class DahuaController {
 
     @GetMapping("/playback")
     public void playback(@RequestParam("ip") String ip,
-                      @RequestParam("username") String username,
-                      @RequestParam("password") String password,
-                      @RequestParam("start") String startTimeStr,
-                      @RequestParam("duration") Integer duration,
-                      @RequestParam("channelId") Integer channelId,
-                      HttpServletRequest request,
-                      HttpServletResponse response) throws Exception {
+                         @RequestParam("username") String username,
+                         @RequestParam("password") String password,
+                         @RequestParam("start") String startTimeStr,
+                         @RequestParam("duration") Integer duration,
+                         @RequestParam("channelId") Integer channelId,
+                         HttpServletRequest request,
+                         HttpServletResponse response) throws Exception {
 
         Date startDate = DATE_FORMAT.parse(startTimeStr);
 
@@ -78,18 +75,15 @@ public class DahuaController {
             return;
         }
 
-        // ===================== 核心改造：读入内存 → 立即删除文件 =====================
+        // 读入内存后立即删除文件
         byte[] videoBytes;
         try (FileInputStream fis = new FileInputStream(file)) {
-            // 一次性读入内存
             videoBytes = new byte[(int) file.length()];
             fis.read(videoBytes);
         } finally {
-            // 无论如何都删除磁盘文件！！！
             file.delete();
         }
 
-        // 后续全部使用内存字节流，不再操作磁盘文件
         try (ByteArrayInputStream byteIn = new ByteArrayInputStream(videoBytes);
              OutputStream out = response.getOutputStream()) {
 
@@ -106,7 +100,6 @@ public class DahuaController {
                 while ((len = byteIn.read(buffer)) != -1) {
                     out.write(buffer, 0, len);
                 }
-
             } else {
                 long startByte = 0;
                 long endByte = fileLength - 1;
@@ -117,7 +110,6 @@ public class DahuaController {
                     endByte = Long.parseLong(ranges[1]);
                 }
 
-                // 安全校验
                 if (endByte >= fileLength) endByte = fileLength - 1;
                 long contentLength = endByte - startByte + 1;
 
@@ -125,7 +117,6 @@ public class DahuaController {
                 response.setHeader("Content-Range", "bytes " + startByte + "-" + endByte + "/" + fileLength);
                 response.setHeader("Content-Length", String.valueOf(contentLength));
 
-                // 内存流定位
                 byteIn.skip(startByte);
                 byte[] buffer = new byte[8192];
                 long remaining = contentLength;
@@ -135,6 +126,73 @@ public class DahuaController {
                     out.write(buffer, 0, len);
                     remaining -= len;
                 }
+            }
+        }
+    }
+
+    // ====================== 新增：实时预览摄像头接口 ======================
+    @GetMapping("/review")
+    public void review(
+            @RequestParam("ip") String ip,
+            @RequestParam("username") String username,
+            @RequestParam("password") String password,
+            @RequestParam("channelId") Integer channelId,
+            HttpServletResponse response,
+            HttpServletRequest request
+    ) {
+        Process ffmpeg = null;
+        BufferedReader errorReader = null;
+
+        try {
+            // 1. 构建大华摄像头 RTSP 地址（大华标准格式）
+            String rtspUrl = String.format(
+                    "rtsp://%s:%s@%s:554/cam/realmonitor?channel=%d&subtype=0",
+                    username, password, ip, channelId
+            );
+
+            // 2. FFmpeg 命令（超低延迟转 FLV 流）
+            ProcessBuilder pb = new ProcessBuilder(
+                    "ffmpeg",
+                    "-rtsp_transport", "tcp",
+                    "-i", rtspUrl,
+                    "-c:v", "libx264",
+                    "-preset", "ultrafast",
+                    "-tune", "zerolatency",
+                    "-an", // 禁用音频（可选，打开就删此行）
+                    "-f", "flv",
+                    "-"
+            );
+
+            pb.redirectErrorStream(true);
+            ffmpeg = pb.start();
+
+            // 3. 设置响应头（完全兼容你给的 Python 版本）
+            response.setContentType("video/x-flv");
+            response.setHeader("Access-Control-Allow-Origin", "*");
+            response.setHeader("Cache-Control", "no-cache,no-store");
+            response.setHeader("Connection", "close");
+
+            // 4. 实时流输出
+            try (InputStream in = ffmpeg.getInputStream();
+                 OutputStream out = response.getOutputStream()) {
+
+                byte[] buffer = new byte[4096];
+                int len;
+                while ((len = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, len);
+                    out.flush();
+                }
+            }
+
+        } catch (Exception e) {
+            System.err.println("实时预览流异常: " + e.getMessage());
+        } finally {
+            // 5. 前端断连 → 立即杀死 FFmpeg 进程
+            if (ffmpeg != null) {
+                try {
+                    ffmpeg.destroy();
+                    ffmpeg.waitFor();
+                } catch (Exception ignored) {}
             }
         }
     }

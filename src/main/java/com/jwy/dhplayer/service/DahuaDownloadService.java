@@ -85,7 +85,7 @@ public class DahuaDownloadService {
         String startStr = formatTime(start);
         String endStr = formatTime(end);
 
-        String outputFile = startStr + "__" + endStr + ".mp4";
+        String outputFile = ip + "__" + channelId + "__" + startStr + "__" + endStr + ".mp4";
 
         System.out.println("Start ffmpeg remux...");
 
