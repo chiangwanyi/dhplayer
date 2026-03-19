@@ -14,6 +14,7 @@ public class DahuaCamChannel {
     private String port;             // 端口
     private String username;         // 用户名
     private String password;         // 密码
+    private Integer remoteChannelNo;  // 远程通道号
     private String manufacturer;     // 厂商
     private String deviceType;       // 型号
     private String sn;               // 序列号

@@ -190,7 +190,7 @@ public class DahuaEvsService {
             for (JSONObject device : deviceResult.getJSONObject("params").getJSONArray("info").toList(JSONObject.class)) {
                 for (JSONObject ch : device.getJSONArray("channels").toList(JSONObject.class)) {
                     DahuaCamChannel channel = new DahuaCamChannel();
-                    channel.setChannelNo(channelNo++);
+                    channel.setChannelNo(ch.getInt("logicChannel"));
                     channel.setOnline(device.getInt("online", 0));
                     channel.setStatus(device.getInt("online", 0) == 1 ? "在线" : "离线");
                     channel.setChannelName(ch.getStr("name", "未知通道"));
@@ -201,6 +201,7 @@ public class DahuaEvsService {
                     channel.setManufacturer("私有");
                     channel.setDeviceType(ch.getStr("deviceType", ""));
                     channel.setSn(ch.getStr("sn", ""));
+                    channel.setRemoteChannelNo(ch.getInt("remoteChannel"));
 
                     channelList.add(channel);
                 }

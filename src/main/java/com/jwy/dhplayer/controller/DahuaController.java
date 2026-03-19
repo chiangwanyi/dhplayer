@@ -26,6 +26,30 @@ public class DahuaController {
 
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
+    /**
+     * 抓取视频
+     * @param evsIp 磁盘阵列 IP
+     * @param username 磁盘阵列 用户名
+     * @param password 磁盘阵列 密码
+     * @param targetIp 目标（要抓取视频的摄像机）
+     * @param startTimeStr
+     * @param left
+     * @param right
+     * @param response
+     * @throws Exception
+     */
+    @GetMapping("/capVideo")
+    public void capVideo(@RequestParam("evsIp") String evsIp,
+                         @RequestParam("username") String username,
+                         @RequestParam("password") String password,
+                         @RequestParam("targetIp") String targetIp,
+                         @RequestParam("remoteChannel") Integer remoteChannel,
+                         @RequestParam("start") String startTimeStr,
+                         @RequestParam("left") Integer left,
+                         @RequestParam("right") Integer right,
+                         HttpServletResponse response) throws Exception {
+    }
+
     @GetMapping("/channels")
     public List<DahuaCamChannel> channels(@RequestParam("ip") String ip,
                            @RequestParam("username") String username,
