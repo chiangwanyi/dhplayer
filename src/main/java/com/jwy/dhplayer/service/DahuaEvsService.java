@@ -152,7 +152,7 @@ public class DahuaEvsService {
             JSONObject firstBody = JSONUtil.createObj()
                     .set("method", "global.login")
                     .set("params", JSONUtil.createObj().set("userName", user).set("password", "").set("clientType", "Web3.0"))
-                    .set("id", 5).set("session", null);
+                    .set("id", 1).set("session", null);
 
             HttpResponse firstResp = HttpRequest.post(loginUrl).body(firstBody.toString()).execute();
             JSONObject firstResult = JSONUtil.parseObj(firstResp.body());
@@ -168,7 +168,7 @@ public class DahuaEvsService {
                     .set("params", JSONUtil.createObj()
                             .set("userName", user).set("clientType", "Web3.0")
                             .set("authorityType", "Default").set("passwordType", "Default").set("password", encryptPwd))
-                    .set("id", 6).set("session", session1);
+                    .set("id", 2).set("session", session1);
 
             HttpResponse secondResp = HttpRequest.post(loginUrl).body(secondBody.toString()).execute();
             JSONObject secondResult = JSONUtil.parseObj(secondResp.body());
@@ -181,7 +181,7 @@ public class DahuaEvsService {
             JSONObject deviceBody = JSONUtil.createObj()
                     .set("method", "AsyncDeviceManager.getDeviceInfoEx")
                     .set("params", JSONUtil.createObj().set("deviceIDs", new Object[0]))
-                    .set("id", 47).set("session", session2);
+                    .set("id", 3).set("session", session2);
 
             HttpResponse deviceResp = HttpRequest.post(deviceUrl).body(deviceBody.toString()).execute();
             JSONObject deviceResult = JSONUtil.parseObj(deviceResp.body());
