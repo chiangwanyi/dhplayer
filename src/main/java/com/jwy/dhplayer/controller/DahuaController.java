@@ -1,6 +1,7 @@
 package com.jwy.dhplayer.controller;
 
-import com.jwy.dhplayer.service.DahuaDownloadService;
+import com.jwy.dhplayer.entity.DahuaCamChannel;
+import com.jwy.dhplayer.service.DahuaEvsService;
 import com.netsdk.lib.NetSDKLib;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,15 +15,24 @@ import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 @RestController
 @RequestMapping("/camera")
 public class DahuaController {
 
     @Resource
-    DahuaDownloadService service;
+    DahuaEvsService service;
 
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+    @GetMapping("/channels")
+    public List<DahuaCamChannel> channels(@RequestParam("ip") String ip,
+                           @RequestParam("username") String username,
+                           @RequestParam("password") String password) throws Exception {
+        List<DahuaCamChannel> channels = service.channels(ip, username, password);
+        return channels;
+    }
 
     @GetMapping("/playback")
     public void playback(@RequestParam("ip") String ip,
