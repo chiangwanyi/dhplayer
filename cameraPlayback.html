@@ -109,6 +109,15 @@
 
     <div class="panel">
         <div style="margin-bottom:10px">
+            IP
+            <input v-model="ip">
+
+            Username
+            <input v-model="username">
+
+            Password
+            <input v-model="password">
+
             Start
             <input v-model="startInput">
 
@@ -153,6 +162,9 @@
 
     createApp({
         setup() {
+            const ip = "192.168.1.108"
+            const username = "admin"
+            const password = "drx123456"
             const baseUrl = "http://localhost:10999/camera/playback"
             const dateStr = ref("2026-03-13")
 
@@ -198,7 +210,7 @@
 
                 currentStart = new Date(startStr.replace(/-/g, "/"))
 
-                const url = `${baseUrl}?ip=192.168.1.108&username=admin&password=drx123456&start=${encodeURIComponent(startStr)}&duration=${duration.value}&channelId=${channelId.value}`
+                const url = `${baseUrl}?ip=${ip}&username=${username}&password=${password}&start=${encodeURIComponent(startStr)}&duration=${duration.value}&channelId=${channelId.value}`
 
                 player.source = {
                     type: 'video',
@@ -266,6 +278,9 @@
             })
 
             return {
+                ip,
+                username,
+                password,
                 duration,
                 channelId,
                 sliderSeconds,
