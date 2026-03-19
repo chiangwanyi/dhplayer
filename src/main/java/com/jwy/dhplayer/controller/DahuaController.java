@@ -1,7 +1,11 @@
 package com.jwy.dhplayer.controller;
 
+import cn.hutool.core.date.DateTime;
+import cn.hutool.core.date.DateUtil;
 import com.jwy.dhplayer.entity.DahuaCamChannel;
 import com.jwy.dhplayer.service.DahuaEvsService;
+import com.jwy.dhplayer.util.DahuaDateUtil;
+import com.jwy.dhplayer.util.RtspUtil;
 import com.netsdk.lib.NetSDKLib;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,6 +20,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/camera")
@@ -31,7 +36,7 @@ public class DahuaController {
      * @param evsIp 磁盘阵列 IP
      * @param username 磁盘阵列 用户名
      * @param password 磁盘阵列 密码
-     * @param targetIp 目标（要抓取视频的摄像机）
+     * @param targetCamRtsp 通常是 rtsp://admin:drx123456@192.168.1.10/cam/realmonitor?channel=1&subtype=0 这种格式
      * @param startTimeStr
      * @param left
      * @param right
@@ -42,12 +47,44 @@ public class DahuaController {
     public void capVideo(@RequestParam("evsIp") String evsIp,
                          @RequestParam("username") String username,
                          @RequestParam("password") String password,
-                         @RequestParam("targetIp") String targetIp,
-                         @RequestParam("remoteChannel") Integer remoteChannel,
+                         @RequestParam("targetCamRtsp") String targetCamRtsp,
                          @RequestParam("start") String startTimeStr,
                          @RequestParam("left") Integer left,
                          @RequestParam("right") Integer right,
                          HttpServletResponse response) throws Exception {
+        // 去掉 evsIp 中可能存在的 http://
+        evsIp = evsIp.replace("http://", "");
+        // 使用正则表达式将 targetCamRtsp 中的 ip地址、channel 提取出来
+        String ip = RtspUtil.getIpFromRtsp(targetCamRtsp);
+        int remoteChannelNo = RtspUtil.getChannelFromRtsp(targetCamRtsp);
+        List<DahuaCamChannel> channels = service.channels(ip, username, password);
+        for (DahuaCamChannel channel : channels) {
+            if (Objects.equals(channel.getIp(), ip) && Objects.equals(channel.getRemoteChannelNo(), remoteChannelNo)) {
+//                Date startDate = DATE_FORMAT.parse(startTimeStr);
+//
+//                Calendar startCal = Calendar.getInstance();
+//                startCal.setTime(startDate);
+//
+//                NetSDKLib.NET_TIME start = DahuaDateUtil.getNetTime(startDate);
+//                start.dwYear = startCal.get(Calendar.YEAR);
+//                start.dwMonth = startCal.get(Calendar.MONTH) + 1;
+//                start.dwDay = startCal.get(Calendar.DAY_OF_MONTH);
+//                start.dwHour = startCal.get(Calendar.HOUR_OF_DAY);
+//                start.dwMinute = startCal.get(Calendar.MINUTE);
+//                start.dwSecond = startCal.get(Calendar.SECOND);
+//
+//                Calendar endCal = (Calendar) startCal.clone();
+//                endCal.add(Calendar.SECOND, duration);
+//
+//                NetSDKLib.NET_TIME end = new NetSDKLib.NET_TIME();
+//                end.dwYear = endCal.get(Calendar.YEAR);
+//                end.dwMonth = endCal.get(Calendar.MONTH) + 1;
+//                end.dwDay = endCal.get(Calendar.DAY_OF_MONTH);
+//                end.dwHour = endCal.get(Calendar.HOUR_OF_DAY);
+//                end.dwMinute = endCal.get(Calendar.MINUTE);
+//                end.dwSecond = endCal.get(Calendar.SECOND);
+            }
+        }
     }
 
     @GetMapping("/channels")
@@ -69,28 +106,10 @@ public class DahuaController {
                          HttpServletResponse response) throws Exception {
 
         Date startDate = DATE_FORMAT.parse(startTimeStr);
+        NetSDKLib.NET_TIME start = DahuaDateUtil.getNetTime(startDate);
 
-        Calendar startCal = Calendar.getInstance();
-        startCal.setTime(startDate);
-
-        NetSDKLib.NET_TIME start = new NetSDKLib.NET_TIME();
-        start.dwYear = startCal.get(Calendar.YEAR);
-        start.dwMonth = startCal.get(Calendar.MONTH) + 1;
-        start.dwDay = startCal.get(Calendar.DAY_OF_MONTH);
-        start.dwHour = startCal.get(Calendar.HOUR_OF_DAY);
-        start.dwMinute = startCal.get(Calendar.MINUTE);
-        start.dwSecond = startCal.get(Calendar.SECOND);
-
-        Calendar endCal = (Calendar) startCal.clone();
-        endCal.add(Calendar.SECOND, duration);
-
-        NetSDKLib.NET_TIME end = new NetSDKLib.NET_TIME();
-        end.dwYear = endCal.get(Calendar.YEAR);
-        end.dwMonth = endCal.get(Calendar.MONTH) + 1;
-        end.dwDay = endCal.get(Calendar.DAY_OF_MONTH);
-        end.dwHour = endCal.get(Calendar.HOUR_OF_DAY);
-        end.dwMinute = endCal.get(Calendar.MINUTE);
-        end.dwSecond = endCal.get(Calendar.SECOND);
+        DateTime endDate = DateUtil.offsetSecond(startDate, duration);
+        NetSDKLib.NET_TIME end = DahuaDateUtil.getNetTime(endDate);
 
         String videoFilePath = service.download(
                 ip,
