@@ -179,6 +179,12 @@
             let currentStart = null
             let isDragging = false
 
+            // 新增：从 startInput 提取日期
+            function updateDateStrFromStartInput() {
+                if (!startInput.value) return
+                dateStr.value = startInput.value.split(' ')[0]
+            }
+
             // 秒数转时间
             function secondsToTime(sec) {
                 const h = Math.floor(sec / 3600)
@@ -205,7 +211,8 @@
 
             // 加载视频 + 加载完成自动播放
             function loadVideo(startStr) {
-
+                // 👇 加这一行
+                updateDateStrFromStartInput()
                 loading.value = true
 
                 currentStart = new Date(startStr.replace(/-/g, "/"))
@@ -244,7 +251,7 @@
             function onDragEnd() {
                 if (!isDragging) return
                 isDragging = false
-                const date = new Date(dateStr.value + " 00:00:00")
+                const date = new Date(startInput.value.split(' ')[0] + " 00:00:00")
                 date.setSeconds(sliderSeconds.value)
                 const start = formatDate(date)
                 loadVideo(start)
