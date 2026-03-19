@@ -39,7 +39,7 @@ public class DahuaEvsHutoolTest {
         String random = params.getStr("random");
 
         // 2. 大华加密规则：MD5(用户名:realm:密码:random) 大写
-        String encryptPwd = encryptPassword(USERNAME, realm, PASSWORD, random);
+        String encryptPwd = encryptPassword(USERNAME, realm, PASSWORD);
         System.out.println("加密后密码：" + encryptPwd);
 
         // 3. 第二次登录：完成认证
@@ -85,11 +85,12 @@ public class DahuaEvsHutoolTest {
     }
 
     /**
-     * 大华EVS密码加密（Hutool一行MD5）
+     * 大华EVS 正确 WEB 登录加密算法（必须用这个！）
+     * 规则：MD5(用户名:realm:密码) → 大写
      */
-    private static String encryptPassword(String username, String realm, String password, String random) {
-        // 加密规则：用户名:realm:密码:random → MD5大写
-        String raw = StrUtil.format("{}:{}:{}:{}", username, realm, password, random);
+    private static String encryptPassword(String username, String realm, String password) {
+        // 正确格式：username:realm:password
+        String raw = StrUtil.format("{}:{}:{}", username, realm, password);
         return DigestUtil.md5Hex(raw).toUpperCase();
     }
 
