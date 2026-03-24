@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -37,54 +36,42 @@ public class DahuaController {
      * @param username 磁盘阵列 用户名
      * @param password 磁盘阵列 密码
      * @param targetCamRtsp 通常是 rtsp://admin:drx123456@192.168.1.10/cam/realmonitor?channel=1&subtype=0 这种格式
-     * @param startTimeStr
      * @param left
      * @param right
-     * @param response
      * @throws Exception
      */
     @GetMapping("/capVideo")
-    public void capVideo(@RequestParam("evsIp") String evsIp,
+    public String capVideo(@RequestParam("evsIp") String evsIp,
                          @RequestParam("username") String username,
                          @RequestParam("password") String password,
                          @RequestParam("targetCamRtsp") String targetCamRtsp,
-                         @RequestParam("start") String startTimeStr,
+                         @RequestParam("time") String timeStr,
                          @RequestParam("left") Integer left,
-                         @RequestParam("right") Integer right,
-                         HttpServletResponse response) throws Exception {
+                         @RequestParam("right") Integer right) throws Exception {
         // 去掉 evsIp 中可能存在的 http://
         evsIp = evsIp.replace("http://", "");
         // 使用正则表达式将 targetCamRtsp 中的 ip地址、channel 提取出来
         String ip = RtspUtil.getIpFromRtsp(targetCamRtsp);
         int remoteChannelNo = RtspUtil.getChannelFromRtsp(targetCamRtsp);
-        List<DahuaCamChannel> channels = service.channels(ip, username, password);
+        List<DahuaCamChannel> channels = service.channels(evsIp, username, password);
         for (DahuaCamChannel channel : channels) {
             if (Objects.equals(channel.getIp(), ip) && Objects.equals(channel.getRemoteChannelNo(), remoteChannelNo)) {
-//                Date startDate = DATE_FORMAT.parse(startTimeStr);
-//
-//                Calendar startCal = Calendar.getInstance();
-//                startCal.setTime(startDate);
-//
-//                NetSDKLib.NET_TIME start = DahuaDateUtil.getNetTime(startDate);
-//                start.dwYear = startCal.get(Calendar.YEAR);
-//                start.dwMonth = startCal.get(Calendar.MONTH) + 1;
-//                start.dwDay = startCal.get(Calendar.DAY_OF_MONTH);
-//                start.dwHour = startCal.get(Calendar.HOUR_OF_DAY);
-//                start.dwMinute = startCal.get(Calendar.MINUTE);
-//                start.dwSecond = startCal.get(Calendar.SECOND);
-//
-//                Calendar endCal = (Calendar) startCal.clone();
-//                endCal.add(Calendar.SECOND, duration);
-//
-//                NetSDKLib.NET_TIME end = new NetSDKLib.NET_TIME();
-//                end.dwYear = endCal.get(Calendar.YEAR);
-//                end.dwMonth = endCal.get(Calendar.MONTH) + 1;
-//                end.dwDay = endCal.get(Calendar.DAY_OF_MONTH);
-//                end.dwHour = endCal.get(Calendar.HOUR_OF_DAY);
-//                end.dwMinute = endCal.get(Calendar.MINUTE);
-//                end.dwSecond = endCal.get(Calendar.SECOND);
+                Date time = DATE_FORMAT.parse(timeStr);
+                NetSDKLib.NET_TIME start = DahuaDateUtil.getNetTime(DateUtil.offsetSecond(time, -left));
+                NetSDKLib.NET_TIME end = DahuaDateUtil.getNetTime(DateUtil.offsetSecond(time, right));
+                String videoFilePath = service.download(
+                        evsIp,
+                        37777,
+                        username,
+                        password,
+                        channel.getChannelNo(),
+                        start,
+                        end
+                );
+                return videoFilePath;
             }
         }
+        return "未找到对应通道";
     }
 
     @GetMapping("/channels")
